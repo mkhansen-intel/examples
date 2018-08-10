@@ -16,13 +16,13 @@
 #include <memory>
 #include "example_interfaces/srv/add_two_ints.hpp"
 #include "rclcpp/rclcpp.hpp"
- #include "rclcpp/utilities.hpp"
 
 #include "rclcpp/action_server.hpp" // TODO: remove when node can create action server
 
 using AddTwoInts = example_interfaces::srv::AddTwoInts;
 rclcpp::Node::SharedPtr g_node = nullptr;
 bool g_cancel = false;
+using namespace std::chrono_literals;
 
 void handle_action(
   const std::shared_ptr<rmw_request_id_t> request_header,
@@ -34,8 +34,8 @@ void handle_action(
     g_node->get_logger(),
     "request: %" PRId64 " + %" PRId64, request->a, request->b)
   RCLCPP_INFO(g_node->get_logger(), "Waiting 10 seconds for cancellation")
-  rclcpp::utilities::sleep_for(10000000000);
-  if (g_cancel = false)
+  std::this_thread::sleep_for(10s);
+  if (g_cancel == false)
   {
     response->sum = request->a + request->b;
   }
@@ -64,7 +64,10 @@ int main(int argc, char ** argv)
   const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default;
   rcl_service_options_t service_options = rcl_service_get_default_options();
   service_options.qos = qos_profile;
-  auto action_server = ActionServer(g_node, "add_two_ints_action", handle_action, handle_cancel, service_options,  )
+  auto node_handle = g_node->get_node_base_interface()->get_shared_rcl_node_handle();
+  //auto action_server = ActionServer<AddTwoInts>(node_handle, "add_two_ints_action", handle_action, handle_cancel, service_options)
+  auto dummy_test = DummyTest();
+  
   rclcpp::spin(g_node);
   rclcpp::shutdown();
   g_node = nullptr;
