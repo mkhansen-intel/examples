@@ -17,7 +17,7 @@ find_package(rclcpp REQUIRED)
 add_executable(action_server_main main.cpp)
 ament_target_dependencies(action_server_main rclcpp example_interfaces)
 
-install(TARGETS service_main
+install(TARGETS action_server_main
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
