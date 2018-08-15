@@ -24,7 +24,7 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("minimal_client");
-  auto client = node->create_client<AddTwoInts>("_request_add_two_ints");
+  auto client = node->create_client<AddTwoInts>("_request_add_two_ints_action");
   while (!client->wait_for_service(std::chrono::seconds(1))) {
     if (!rclcpp::ok()) {
       RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for service to appear.")
@@ -32,10 +32,12 @@ int main(int argc, char * argv[])
     }
     RCLCPP_INFO(node->get_logger(), "waiting for service to appear...")
   }
+  RCLCPP_INFO(node->get_logger(), "Sending request...");
   auto request = std::make_shared<AddTwoInts::Request>();
   request->a = 41;
   request->b = 1;
   auto result_future = client->async_send_request(request);
+  RCLCPP_INFO(node->get_logger(), "Waiting for response...");
   if (rclcpp::spin_until_future_complete(node, result_future) !=
     rclcpp::executor::FutureReturnCode::SUCCESS)
   {
