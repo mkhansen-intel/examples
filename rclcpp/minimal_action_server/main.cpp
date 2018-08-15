@@ -24,10 +24,17 @@ rclcpp::Node::SharedPtr g_node = nullptr;
 bool g_cancel = false;
 using namespace std::chrono_literals;
 
+using SharedPtrWithRequestHeaderCallback = std::function<
+  void(
+    const std::shared_ptr<rmw_request_id_t>,
+    const std::shared_ptr<AddTwoInts::Request>,
+    std::shared_ptr<AddTwoInts::Response>
+  )>;
+
 void handle_action(
   const std::shared_ptr<rmw_request_id_t> request_header,
   const std::shared_ptr<AddTwoInts::Request> request,
-  const std::shared_ptr<AddTwoInts::Response> response)
+  std::shared_ptr<AddTwoInts::Response> response)
 {
   (void)request_header;
   RCLCPP_INFO(
@@ -39,19 +46,20 @@ void handle_action(
   {
     response->sum = request->a + request->b;
   }
+  RCLCPP_INFO(g_node->get_logger(), "Response sent")
 }
 
 void handle_cancel(
   const std::shared_ptr<rmw_request_id_t> request_header,
   const std::shared_ptr<AddTwoInts::Request> request,
-  const std::shared_ptr<AddTwoInts::Response> response)
+  std::shared_ptr<AddTwoInts::Response> response)
 {
 // TODO: replace code here with correct message type for cancelling
   (void)request_header;
   RCLCPP_INFO(
 	g_node->get_logger(),
 	"Cancelled request: %" PRId64 " + %" PRId64, request->a, request->b)
-  response->sum = request->a + request->b;
+  g_cancel = true;
 }
 
 
@@ -67,12 +75,15 @@ int main(int argc, char ** argv)
   auto node_handle = g_node->get_node_base_interface()->get_shared_rcl_node_handle();
   const std::string & action_name = "add_two_ints_action";
   rclcpp::AnyServiceCallback<AddTwoInts> action_callback;
-  action_callback.set(handle_action);
+  action_callback.set(std::forward<SharedPtrWithRequestHeaderCallback>(handle_action));
   rclcpp::AnyServiceCallback<AddTwoInts> cancel_callback;
-  cancel_callback.set(handle_cancel);
+  cancel_callback.set(std::forward<SharedPtrWithRequestHeaderCallback>(handle_cancel));
   auto action_server = rclcpp::ActionServer<AddTwoInts>::make_shared(node_handle,
-		  action_name, action_callback, cancel_callback, service_options);
+		  action_name, action_callback, cancel_callback, service_options,
+		  g_node->get_node_services_interface(), nullptr);
   
+  RCLCPP_INFO(g_node->get_logger(), "Started minimal action server")
+
   rclcpp::spin(g_node);
   rclcpp::shutdown();
   g_node = nullptr;
