@@ -65,8 +65,13 @@ int main(int argc, char ** argv)
   rcl_service_options_t service_options = rcl_service_get_default_options();
   service_options.qos = qos_profile;
   auto node_handle = g_node->get_node_base_interface()->get_shared_rcl_node_handle();
-  //auto action_server = ActionServer<AddTwoInts>(node_handle, "add_two_ints_action", handle_action, handle_cancel, service_options)
-  auto dummy_test = DummyTest();
+  const std::string & action_name = "add_two_ints_action";
+  rclcpp::AnyServiceCallback<AddTwoInts> action_callback;
+  action_callback.set(handle_action);
+  rclcpp::AnyServiceCallback<AddTwoInts> cancel_callback;
+  cancel_callback.set(handle_cancel);
+  auto action_server = rclcpp::ActionServer<AddTwoInts>::make_shared(node_handle,
+		  action_name, action_callback, cancel_callback, service_options);
   
   rclcpp::spin(g_node);
   rclcpp::shutdown();
