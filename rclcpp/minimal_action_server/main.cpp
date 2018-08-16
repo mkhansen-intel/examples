@@ -17,8 +17,6 @@
 #include "example_interfaces/srv/add_two_ints.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "rclcpp/action_server.hpp" // TODO: remove when node can create action server
-
 using AddTwoInts = example_interfaces::srv::AddTwoInts;
 rclcpp::Node::SharedPtr g_node = nullptr;
 bool g_cancel = false;
@@ -37,6 +35,8 @@ void handle_action(
   std::shared_ptr<AddTwoInts::Response> response)
 {
   (void)request_header;
+  g_cancel = false; // this really should be enclosed in a mutex lock, but this is only a simple example
+
   RCLCPP_INFO(
     g_node->get_logger(),
     "request: %" PRId64 " + %" PRId64, request->a, request->b)
@@ -45,8 +45,11 @@ void handle_action(
   if (g_cancel == false)
   {
     response->sum = request->a + request->b;
+    RCLCPP_INFO(g_node->get_logger(), "Response sent")
   }
-  RCLCPP_INFO(g_node->get_logger(), "Response sent")
+  else {
+	RCLCPP_INFO(g_node->get_logger(), "Request cancelled!")
+  }
 }
 
 void handle_cancel(
@@ -54,11 +57,11 @@ void handle_cancel(
   const std::shared_ptr<AddTwoInts::Request> request,
   std::shared_ptr<AddTwoInts::Response> response)
 {
-// TODO: replace code here with correct message type for cancelling
+  // TODO: replace code here with correct message type for cancelling
   (void)request_header;
-  g_cancel = true;
+  g_cancel = true; // this really should be enclosed in a mutex lock, but this is only a simple example
   response->sum = 0; // TODO: make this return a status response
-  RCLCPP_INFO(g_node->get_logger(), "Cancelled request")
+  RCLCPP_INFO(g_node->get_logger(), "Cancelling request: %" PRId64 " + %" PRId64, request->a, request->b)
 }
 
 
@@ -67,22 +70,12 @@ int main(int argc, char ** argv)
   rclcpp::init(argc, argv);
   g_node = rclcpp::Node::make_shared("minimal_action_server");
   // TODO: Add node interface to action server
-  //auto action_server = g_node->create_service<AddTwoInts>("add_two_ints", handle_action);
+
   const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default;
-  rcl_service_options_t service_options = rcl_service_get_default_options();
-  service_options.qos = qos_profile;
-  auto node_handle = g_node->get_node_base_interface()->get_shared_rcl_node_handle();
-  const std::string & action_name = "add_two_ints_action";
-
-  rclcpp::AnyServiceCallback<AddTwoInts> action_callback;
-  action_callback.set(std::forward<SharedPtrWithRequestHeaderCallback>(handle_action));
-
-  rclcpp::AnyServiceCallback<AddTwoInts> cancel_callback;
-  cancel_callback.set(std::forward<SharedPtrWithRequestHeaderCallback>(handle_cancel));
-
-  auto action_server = rclcpp::ActionServer<AddTwoInts>::make_shared(node_handle,
-		  action_name, action_callback, cancel_callback, service_options,
-		  g_node->get_node_services_interface(), nullptr);
+  auto action_server = g_node->create_action_server<AddTwoInts>("add_two_ints",
+		  handle_action,
+		  handle_cancel,
+		  qos_profile);
   
   RCLCPP_INFO(g_node->get_logger(), "Started minimal action server")
 
