@@ -56,10 +56,9 @@ void handle_cancel(
 {
 // TODO: replace code here with correct message type for cancelling
   (void)request_header;
-  RCLCPP_INFO(
-	g_node->get_logger(),
-	"Cancelled request: %" PRId64 " + %" PRId64, request->a, request->b)
   g_cancel = true;
+  response->sum = 0; // TODO: make this return a status response
+  RCLCPP_INFO(g_node->get_logger(), "Cancelled request")
 }
 
 
@@ -74,10 +73,13 @@ int main(int argc, char ** argv)
   service_options.qos = qos_profile;
   auto node_handle = g_node->get_node_base_interface()->get_shared_rcl_node_handle();
   const std::string & action_name = "add_two_ints_action";
+
   rclcpp::AnyServiceCallback<AddTwoInts> action_callback;
   action_callback.set(std::forward<SharedPtrWithRequestHeaderCallback>(handle_action));
+
   rclcpp::AnyServiceCallback<AddTwoInts> cancel_callback;
   cancel_callback.set(std::forward<SharedPtrWithRequestHeaderCallback>(handle_cancel));
+
   auto action_server = rclcpp::ActionServer<AddTwoInts>::make_shared(node_handle,
 		  action_name, action_callback, cancel_callback, service_options,
 		  g_node->get_node_services_interface(), nullptr);
