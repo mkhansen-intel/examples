@@ -22,7 +22,7 @@ using AddTwoInts = example_interfaces::srv::AddTwoInts;
 
 void send_and_wait(rclcpp::Node::SharedPtr node)
 {
-	  auto client = node->create_client<AddTwoInts>("_request_add_two_ints_action");
+	  auto client = node->create_client<AddTwoInts>("_request_add_two_ints");
 	  while (!client->wait_for_service(std::chrono::seconds(1))) {
 	    if (!rclcpp::ok()) {
 	      RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for service to appear.")
@@ -49,7 +49,7 @@ void send_and_wait(rclcpp::Node::SharedPtr node)
 
 void send_and_cancel(rclcpp::Node::SharedPtr node)
 {
-	  auto client = node->create_client<AddTwoInts>("_request_add_two_ints_action");
+	  auto client = node->create_client<AddTwoInts>("_request_add_two_ints");
 	  while (!client->wait_for_service(std::chrono::seconds(1))) {
 	    if (!rclcpp::ok()) {
 	      RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for service to appear.")
@@ -64,7 +64,7 @@ void send_and_cancel(rclcpp::Node::SharedPtr node)
 	  auto result_future = client->async_send_request(request);
 
 	  RCLCPP_INFO(node->get_logger(), "Cancelling request...")
-	  auto cancel_client = node->create_client<AddTwoInts>("_cancel_add_two_ints_action");
+	  auto cancel_client = node->create_client<AddTwoInts>("_cancel_add_two_ints");
 	  auto cancel_future = cancel_client->async_send_request(request);
 
 	  if (rclcpp::spin_until_future_complete(node, cancel_future) !=
