@@ -22,13 +22,13 @@ using AddTwoInts = example_interfaces::srv::AddTwoInts;
 
 void send_and_wait(rclcpp::Node::SharedPtr node)
 {
-	  auto client = node->create_client<AddTwoInts>("_request_add_two_ints");
-	  while (!client->wait_for_service(std::chrono::seconds(1))) {
+	  auto client = node->create_action_client<AddTwoInts>("add_two_ints");
+	  while (!client->wait_for_action(std::chrono::seconds(1))) {
 	    if (!rclcpp::ok()) {
-	      RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for service to appear.")
+	      RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for action to appear.")
 	      return;
 	    }
-	    RCLCPP_INFO(node->get_logger(), "waiting for service to appear...")
+	    RCLCPP_INFO(node->get_logger(), "waiting for action to appear...")
 	  }
 	  RCLCPP_INFO(node->get_logger(), "Sending request...");
 	  auto request = std::make_shared<AddTwoInts::Request>();
@@ -39,7 +39,7 @@ void send_and_wait(rclcpp::Node::SharedPtr node)
 	  if (rclcpp::spin_until_future_complete(node, result_future) !=
 	    rclcpp::executor::FutureReturnCode::SUCCESS)
 	  {
-	    RCLCPP_ERROR(node->get_logger(), "service call failed :(")
+	    RCLCPP_ERROR(node->get_logger(), "action call failed :(")
 	    return;
 	  }
 	  auto result = result_future.get();
@@ -49,8 +49,8 @@ void send_and_wait(rclcpp::Node::SharedPtr node)
 
 void send_and_cancel(rclcpp::Node::SharedPtr node)
 {
-	  auto client = node->create_client<AddTwoInts>("_request_add_two_ints");
-	  while (!client->wait_for_service(std::chrono::seconds(1))) {
+	  auto client = node->create_action_client<AddTwoInts>("add_two_ints");
+	  while (!client->wait_for_action(std::chrono::seconds(1))) {
 	    if (!rclcpp::ok()) {
 	      RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for service to appear.")
 	      return;
