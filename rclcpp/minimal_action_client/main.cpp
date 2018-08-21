@@ -64,8 +64,7 @@ void send_and_cancel(rclcpp::Node::SharedPtr node)
 	  auto result_future = client->async_send_request(request);
 
 	  RCLCPP_INFO(node->get_logger(), "Cancelling request...")
-	  auto cancel_client = node->create_client<AddTwoInts>("_cancel_add_two_ints");
-	  auto cancel_future = cancel_client->async_send_request(request);
+	  auto cancel_future = client->cancel_request(request);
 
 	  if (rclcpp::spin_until_future_complete(node, cancel_future) !=
 	    rclcpp::executor::FutureReturnCode::SUCCESS)
