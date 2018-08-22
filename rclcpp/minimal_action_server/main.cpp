@@ -15,9 +15,12 @@
 #include <inttypes.h>
 #include <memory>
 #include "example_interfaces/srv/add_two_ints.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 using AddTwoInts = example_interfaces::srv::AddTwoInts;
+using StringMsg = std_msgs::msg::String;
+
 rclcpp::Node::SharedPtr g_node = nullptr;
 bool g_cancel = false;
 using namespace std::chrono_literals;
@@ -72,7 +75,7 @@ int main(int argc, char ** argv)
   // TODO: Add node interface to action server
 
   const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default;
-  auto action_server = g_node->create_action_server<AddTwoInts>("add_two_ints",
+  auto action_server = g_node->create_action_server<AddTwoInts, StringMsg>("add_two_ints",
 		  handle_action,
 		  handle_cancel,
 		  qos_profile);
