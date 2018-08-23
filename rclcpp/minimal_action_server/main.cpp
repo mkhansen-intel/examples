@@ -23,6 +23,8 @@ using StringMsg = std_msgs::msg::String;
 
 rclcpp::Node::SharedPtr g_node = nullptr;
 bool g_cancel = false;
+rclcpp::ActionServer<AddTwoInts, StringMsg>::SharedPtr g_action_server;
+
 using namespace std::chrono_literals;
 
 using SharedPtrWithRequestHeaderCallback = std::function<
@@ -43,15 +45,26 @@ void handle_action(
   RCLCPP_INFO(
     g_node->get_logger(),
     "request: %" PRId64 " + %" PRId64, request->a, request->b)
-  RCLCPP_INFO(g_node->get_logger(), "Waiting 10 seconds for cancellation")
+
+  auto message = std_msgs::msg::String();
+  message.data = "Waiting 10 seconds for cancellation";
+  g_action_server->publish_feedback(message);
+  RCLCPP_INFO(g_node->get_logger(), message.data.c_str())
+
   std::this_thread::sleep_for(10s);
   if (g_cancel == false)
   {
     response->sum = request->a + request->b;
-    RCLCPP_INFO(g_node->get_logger(), "Response sent")
+    auto message = std_msgs::msg::String();
+    message.data = "Response sent";
+    g_action_server->publish_feedback(message);
+    RCLCPP_INFO(g_node->get_logger(), message.data.c_str())
   }
   else {
-	RCLCPP_INFO(g_node->get_logger(), "Request cancelled!")
+	auto message = std_msgs::msg::String();
+	message.data = "Request cancelled!";
+	g_action_server->publish_feedback(message);
+	RCLCPP_INFO(g_node->get_logger(), message.data.c_str())
   }
 }
 
@@ -75,7 +88,7 @@ int main(int argc, char ** argv)
   // TODO: Add node interface to action server
 
   const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default;
-  auto action_server = g_node->create_action_server<AddTwoInts, StringMsg>("add_two_ints",
+  g_action_server = g_node->create_action_server<AddTwoInts, StringMsg>("add_two_ints",
 		  handle_action,
 		  handle_cancel,
 		  qos_profile);
