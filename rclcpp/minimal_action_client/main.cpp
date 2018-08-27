@@ -16,9 +16,15 @@
 #include <cinttypes>
 #include <memory>
 #include "example_interfaces/srv/add_two_ints.hpp"
+#include "std_msgs/msg/string.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 using AddTwoInts = example_interfaces::srv::AddTwoInts;
+
+void feedback_callback(const std_msgs::msg::String::SharedPtr msg)
+{
+  RCLCPP_INFO(rclcpp::get_logger("Feedback"), "'%s'", msg->data.c_str())
+}
 
 void send_and_wait(rclcpp::Node::SharedPtr node)
 {
@@ -82,6 +88,10 @@ int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("minimal_action_client");
+
+  auto subscription = node->create_subscription<std_msgs::msg::String>
+      ("_feedback_add_two_ints", feedback_callback);
+
   send_and_wait(node);
   send_and_cancel(node);
   rclcpp::shutdown();

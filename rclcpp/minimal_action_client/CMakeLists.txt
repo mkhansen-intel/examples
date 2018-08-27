@@ -13,9 +13,10 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(example_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_executable(action_client_main main.cpp)
-ament_target_dependencies(action_client_main rclcpp example_interfaces)
+ament_target_dependencies(action_client_main rclcpp example_interfaces std_msgs)
 
 install(TARGETS action_client_main
   DESTINATION lib/${PROJECT_NAME})
