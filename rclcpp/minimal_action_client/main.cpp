@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <memory>
 #include <cinttypes>
 #include "example_interfaces/srv/add_two_ints.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -28,14 +29,15 @@ void feedback_callback(const std_msgs::msg::String::SharedPtr msg)
 
 void send_and_wait(rclcpp::Node::SharedPtr node)
 {
-  auto client = node->create_action_client<AddTwoInts, StringMsg>("add_two_ints", feedback_callback);
+  auto client =
+    node->create_action_client<AddTwoInts, StringMsg>("add_two_ints", feedback_callback);
 
   while (!client->wait_for_action(std::chrono::seconds(1))) {
-	if (!rclcpp::ok()) {
-	  RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for action to appear.")
-	  return;
-	}
-	RCLCPP_INFO(node->get_logger(), "waiting for action to appear...")
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for action to appear.")
+      return;
+    }
+    RCLCPP_INFO(node->get_logger(), "waiting for action to appear...")
   }
   RCLCPP_INFO(node->get_logger(), "Sending request...");
   auto request = std::make_shared<AddTwoInts::Request>();
@@ -44,28 +46,29 @@ void send_and_wait(rclcpp::Node::SharedPtr node)
   auto result_future = client->async_send_request(request);
   RCLCPP_INFO(node->get_logger(), "Waiting for response...");
   if (rclcpp::spin_until_future_complete(node, result_future) !=
-	rclcpp::executor::FutureReturnCode::SUCCESS)
+    rclcpp::executor::FutureReturnCode::SUCCESS)
   {
-	RCLCPP_ERROR(node->get_logger(), "action call failed :(")
-	return;
+    RCLCPP_ERROR(node->get_logger(), "action call failed :(")
+    return;
   }
   RCLCPP_INFO(node->get_logger(), "Received response...");
 
   auto result = result_future.get();
   RCLCPP_INFO(node->get_logger(), "result of %" PRId64 " + %" PRId64 " = %" PRId64,
-	request->a, request->b, result->sum)
+    request->a, request->b, result->sum)
 }
 
 void send_and_cancel(rclcpp::Node::SharedPtr node)
 {
-  auto client = node->create_action_client<AddTwoInts, StringMsg>("add_two_ints", feedback_callback);
+  auto client =
+    node->create_action_client<AddTwoInts, StringMsg>("add_two_ints", feedback_callback);
 
   while (!client->wait_for_action(std::chrono::seconds(1))) {
-	if (!rclcpp::ok()) {
-	  RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for service to appear.")
-	  return;
-	}
-	RCLCPP_INFO(node->get_logger(), "waiting for service to appear...")
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(node->get_logger(), "client interrupted while waiting for service to appear.")
+      return;
+    }
+    RCLCPP_INFO(node->get_logger(), "waiting for service to appear...")
   }
   RCLCPP_INFO(node->get_logger(), "Sending request...")
   auto request = std::make_shared<AddTwoInts::Request>();
@@ -77,10 +80,10 @@ void send_and_cancel(rclcpp::Node::SharedPtr node)
   auto cancel_future = client->cancel_request(request);
 
   if (rclcpp::spin_until_future_complete(node, cancel_future) !=
-	rclcpp::executor::FutureReturnCode::SUCCESS)
+    rclcpp::executor::FutureReturnCode::SUCCESS)
   {
-	RCLCPP_ERROR(node->get_logger(), "Cancel failed!")
-	return;
+    RCLCPP_ERROR(node->get_logger(), "Cancel failed!")
+    return;
   }
 
   auto result = result_future.get();
