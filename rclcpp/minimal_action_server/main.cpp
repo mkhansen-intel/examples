@@ -40,7 +40,7 @@ void handle_action(
   std::shared_ptr<AddTwoInts::Response> response)
 {
   (void)request_header;
-  g_cancel = false; // this really should be enclosed in a mutex lock, but this is only a simple example
+  g_cancel = false;  // should be enclosed in a mutex lock, but this is only a simple example
 
   RCLCPP_INFO(
     g_node->get_logger(),
@@ -52,19 +52,17 @@ void handle_action(
   RCLCPP_INFO(g_node->get_logger(), message.data.c_str())
 
   std::this_thread::sleep_for(10s);
-  if (g_cancel == false)
-  {
+  if (g_cancel == false) {
     response->sum = request->a + request->b;
     auto message = std_msgs::msg::String();
     message.data = "Response sent";
     g_action_server->publish_feedback(message);
     RCLCPP_INFO(g_node->get_logger(), message.data.c_str())
-  }
-  else {
-	auto message = std_msgs::msg::String();
-	message.data = "Request cancelled!";
-	g_action_server->publish_feedback(message);
-	RCLCPP_INFO(g_node->get_logger(), message.data.c_str())
+  } else {
+    auto message = std_msgs::msg::String();
+    message.data = "Request cancelled!";
+    g_action_server->publish_feedback(message);
+    RCLCPP_INFO(g_node->get_logger(), message.data.c_str())
   }
 }
 
@@ -73,11 +71,11 @@ void handle_cancel(
   const std::shared_ptr<AddTwoInts::Request> request,
   std::shared_ptr<AddTwoInts::Response> response)
 {
-  // TODO: replace code here with correct message type for cancelling
   (void)request_header;
-  g_cancel = true; // this really should be enclosed in a mutex lock, but this is only a simple example
-  response->sum = 0; // TODO: make this return a status response
-  RCLCPP_INFO(g_node->get_logger(), "Cancelling request: %" PRId64 " + %" PRId64, request->a, request->b)
+  g_cancel = true;  // should be enclosed in a mutex lock, but this is only a simple example
+  response->sum = 0;  // TODO(mkhansen): make this return a status response
+  RCLCPP_INFO(
+    g_node->get_logger(), "Cancelling request: %" PRId64 " + %" PRId64, request->a, request->b)
 }
 
 
@@ -85,14 +83,13 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   g_node = rclcpp::Node::make_shared("minimal_action_server");
-  // TODO: Add node interface to action server
 
   const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default;
   g_action_server = g_node->create_action_server<AddTwoInts, StringMsg>("add_two_ints",
-		  handle_action,
-		  handle_cancel,
-		  qos_profile);
-  
+      handle_action,
+      handle_cancel,
+      qos_profile);
+
   RCLCPP_INFO(g_node->get_logger(), "Started minimal action server")
 
   rclcpp::spin(g_node);
