@@ -86,8 +86,7 @@ void send_and_cancel(rclcpp::Node::SharedPtr node)
     return;
   }
 
-  auto result = result_future.get();
-  RCLCPP_INFO(node->get_logger(), "Cancel succeeded")
+  RCLCPP_INFO(node->get_logger(), "Cancel request sent")
 }
 
 int main(int argc, char * argv[])
