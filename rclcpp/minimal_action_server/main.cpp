@@ -22,7 +22,7 @@ using AddTwoInts = example_interfaces::srv::AddTwoInts;
 using StringMsg = std_msgs::msg::String;
 
 rclcpp::Node::SharedPtr g_node = nullptr;
-bool g_cancel = false;
+std::atomic<bool> g_cancel(false);
 rclcpp::ActionServer<AddTwoInts, StringMsg>::SharedPtr g_action_server;
 
 using namespace std::chrono_literals;
@@ -40,7 +40,7 @@ void handle_action(
   std::shared_ptr<AddTwoInts::Response> response)
 {
   (void)request_header;
-  g_cancel = false;  // should be enclosed in a mutex lock, but this is only a simple example
+  g_cancel = false;  // atomic
 
   RCLCPP_INFO(
     g_node->get_logger(),
@@ -72,10 +72,11 @@ void handle_cancel(
   std::shared_ptr<AddTwoInts::Response> response)
 {
   (void)request_header;
-  g_cancel = true;  // should be enclosed in a mutex lock, but this is only a simple example
+  (void)request;
+  g_cancel = true;  // atomic
   response->sum = 0;  // TODO(mkhansen): make this return a status response
   RCLCPP_INFO(
-    g_node->get_logger(), "Cancelling request: %" PRId64 " + %" PRId64, request->a, request->b)
+    g_node->get_logger(), "Cancel requested")
 }
 
 
@@ -85,14 +86,23 @@ int main(int argc, char ** argv)
   g_node = rclcpp::Node::make_shared("minimal_action_server");
 
   const rmw_qos_profile_t & qos_profile = rmw_qos_profile_services_default;
+
+  // CallbackGroupType::Reentrant allows for parallel execution of callbacks
+  auto callback_group = g_node->create_callback_group(rclcpp::callback_group::CallbackGroupType::Reentrant);
   g_action_server = g_node->create_action_server<AddTwoInts, StringMsg>("add_two_ints",
       handle_action,
       handle_cancel,
-      qos_profile);
+      qos_profile,
+	  callback_group);
 
   RCLCPP_INFO(g_node->get_logger(), "Started minimal action server")
 
-  rclcpp::spin(g_node);
+  // MultiThreadedExecutor for parallel execution of callbacks
+  using rclcpp::executors::MultiThreadedExecutor;
+  MultiThreadedExecutor executor;
+  executor.add_node(g_node);
+  executor.spin();
+
   rclcpp::shutdown();
   g_node = nullptr;
   return 0;
