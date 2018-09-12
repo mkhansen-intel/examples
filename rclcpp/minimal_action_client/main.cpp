@@ -43,7 +43,7 @@ void send_and_wait(rclcpp::Node::SharedPtr node)
   auto request = std::make_shared<AddTwoInts::Request>();
   request->a = 41;
   request->b = 1;
-  auto result_future = client->async_send_request(request);
+  auto result_future = client->send_goal(request);
   RCLCPP_INFO(node->get_logger(), "Waiting for response...");
   if (rclcpp::spin_until_future_complete(node, result_future) !=
     rclcpp::executor::FutureReturnCode::SUCCESS)
@@ -74,10 +74,10 @@ void send_and_cancel(rclcpp::Node::SharedPtr node)
   auto request = std::make_shared<AddTwoInts::Request>();
   request->a = 41;
   request->b = 1;
-  auto result_future = client->async_send_request(request);
+  auto result_future = client->send_goal(request);
 
   RCLCPP_INFO(node->get_logger(), "Cancelling request...")
-  auto cancel_future = client->cancel_request(request);
+  auto cancel_future = client->cancel_goal(request);
 
   if (rclcpp::spin_until_future_complete(node, cancel_future) !=
     rclcpp::executor::FutureReturnCode::SUCCESS)
